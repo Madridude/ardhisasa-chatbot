@@ -1,0 +1,20 @@
+[
+  {
+    "section": "Document Verification",
+    "intent": "missing_white_card",
+    "question": "What if the white card is missing?",
+    "answer": "Reject the application until the applicant provides a certified replacement white card."
+  },
+  {
+    "section": "Consent Checks",
+    "intent": "missing_spousal_consent",
+    "question": "What if spousal consent is missing?",
+    "answer": "Reject the application unless the applicant provides a valid spousal consent document."
+  },
+  {
+    "section": "Green Card Issues",
+    "intent": "torn_green_card",
+    "question": "What if the green card is torn?",
+    "answer": "Flag the document as invalid. Request the applicant to provide a certified replacement."
+  }
+]

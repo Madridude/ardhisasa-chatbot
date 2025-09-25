@@ -1,0 +1,17 @@
+name: ardhisasa
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - langchain
+      - langchain-openai
+      - chromadb
+      - openai
+      - tiktoken
+      - streamlit
+      - pydantic
+      - sqlalchemy
+      - requests

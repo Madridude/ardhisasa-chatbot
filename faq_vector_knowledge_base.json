@@ -1,0 +1,20 @@
+[
+  {
+    "section": "Account & Login",
+    "intent": "reset_password",
+    "question": "How do I reset my password?",
+    "answer": "Go to the login page, click 'Forgot Password', enter your registered ID/email, and follow the instructions sent to you."
+  },
+  {
+    "section": "Payments",
+    "intent": "land_rent_payment",
+    "question": "How do I pay land rent?",
+    "answer": "Login to Ardhisasa, go to the Land Rent section, select your parcel, and pay via Mpesa or eCitizen portal."
+  },
+  {
+    "section": "Parcel Management",
+    "intent": "parcel_search",
+    "question": "How can I search for a parcel?",
+    "answer": "Use the Parcel Search service on the dashboard. Enter the parcel number and verify ownership and details."
+  }
+]
