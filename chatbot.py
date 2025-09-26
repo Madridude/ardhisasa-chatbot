@@ -1,6 +1,6 @@
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
-from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
 
 def main():
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
