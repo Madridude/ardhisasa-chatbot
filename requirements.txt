@@ -9,3 +9,4 @@ tiktoken
 pydantic
 sqlalchemy
 requests
+huggingface_hub
