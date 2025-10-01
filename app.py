@@ -5,7 +5,7 @@ from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.llms import HuggingFaceHub, Ollama
-from openai.error import RateLimitError
+from openai import RateLimitError
 
 st.set_page_config(page_title="Ardhisasa Dual Chatbot", layout="wide")
 
