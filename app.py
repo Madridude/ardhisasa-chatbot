@@ -13,29 +13,65 @@ st.title("🤖 Ardhisasa Dual Chatbot")
 st.write("Handles both **citizen FAQs** and **internal SOP queries** automatically with hybrid LLM fallback.")
 
 # -------------------------------
-# Hybrid LLM Selection
+# Sidebar: Choose LLM Provider
 # -------------------------------
-def get_llm():
-    """Return best available LLM with fallbacks."""
+provider_choice = st.sidebar.radio(
+    "Select LLM Provider",
+    ["Auto (fallback)", "OpenAI", "Hugging Face", "Ollama", "Dummy"]
+)
+
+def get_llm(choice):
+    """Return chosen LLM or auto-fallback."""
+    if choice == "OpenAI":
+        try:
+            return ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        except Exception as e:
+            st.error(f"⚠️ OpenAI error: {e}")
+            return None
+
+    if choice == "Hugging Face":
+        try:
+            return HuggingFaceHub(
+                repo_id="google/flan-t5-base",
+                huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
+            )
+        except Exception as e:
+            st.error(f"⚠️ Hugging Face error: {e}")
+            return None
+
+    if choice == "Ollama":
+        try:
+            return Ollama(model="llama2")
+        except Exception as e:
+            st.error(f"⚠️ Ollama error: {e}")
+            return None
+
+    if choice == "Dummy":
+        class DummyLLM:
+            def predict(self, text):
+                return f"[Simulated Answer] You asked: {text}"
+        return DummyLLM()
+
+    # Auto fallback mode
     try:
         return ChatOpenAI(model="gpt-4o-mini", temperature=0)
     except RateLimitError:
         st.warning("⚠️ OpenAI quota exceeded, switching to Hugging Face...")
-    except Exception as e:
-        st.info(f"⚠️ OpenAI not available: {e}")
+    except Exception:
+        pass
 
     try:
         return HuggingFaceHub(
             repo_id="google/flan-t5-base",
             huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
         )
-    except Exception as e:
-        st.info(f"⚠️ Hugging Face not available: {e}")
+    except Exception:
+        pass
 
     try:
         return Ollama(model="llama2")
-    except Exception as e:
-        st.info(f"⚠️ Ollama not available: {e}")
+    except Exception:
+        pass
 
     class DummyLLM:
         def predict(self, text):
@@ -78,7 +114,7 @@ ingest_if_missing()
 faq_db = Chroma(persist_directory="chroma_faq", collection_name="faq_kb", embedding_function=embeddings)
 sop_db = Chroma(persist_directory="chroma_sop", collection_name="sop_kb", embedding_function=embeddings)
 
-llm = get_llm()
+llm = get_llm(provider_choice)
 faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
 sop_qa = RetrievalQA.from_chain_type(llm=llm, retriever=sop_db.as_retriever())
 
