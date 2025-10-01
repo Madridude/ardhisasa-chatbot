@@ -1,17 +1,9 @@
 import os
-<<<<<<< HEAD
-=======
 import json
->>>>>>> b12b2fae72f779115f5c17a2ea070d618fe55498
 import streamlit as st
-import json
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-<<<<<<< HEAD
-from langchain.vectorstores import Chroma
-=======
 from langchain_chroma import Chroma
->>>>>>> b12b2fae72f779115f5c17a2ea070d618fe55498
 
 st.set_page_config(page_title="Ardhisasa Dual Chatbot", layout="wide")
 
@@ -26,11 +18,7 @@ embeddings = OpenAIEmbeddings()
 def ingest_if_missing():
     if not os.path.exists("chroma_faq") or not os.path.exists("chroma_sop"):
         st.info("⚡ Running ingestion for the first time... please wait.")
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> b12b2fae72f779115f5c17a2ea070d618fe55498
         def load_kb(json_file, collection_name, persist_dir):
             with open(json_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -42,11 +30,7 @@ def ingest_if_missing():
                 embedding=embeddings,
                 metadatas=metadatas,
                 collection_name=collection_name,
-<<<<<<< HEAD
-                persist_directory=persist_dir
-=======
                 persist_directory=persist_dir,
->>>>>>> b12b2fae72f779115f5c17a2ea070d618fe55498
             )
             db.persist()
 
@@ -59,8 +43,16 @@ ingest_if_missing()
 # -------------------------------
 # Step 2: Load databases
 # -------------------------------
-faq_db = Chroma(persist_directory="chroma_faq", collection_name="faq_kb", embedding_function=embeddings)
-sop_db = Chroma(persist_directory="chroma_sop", collection_name="sop_kb", embedding_function=embeddings)
+faq_db = Chroma(
+    persist_directory="chroma_faq",
+    collection_name="faq_kb",
+    embedding_function=embeddings
+)
+sop_db = Chroma(
+    persist_directory="chroma_sop",
+    collection_name="sop_kb",
+    embedding_function=embeddings
+)
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
