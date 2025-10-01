@@ -4,6 +4,7 @@ import streamlit as st
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
+from openai.error import RateLimitError
 
 st.set_page_config(page_title="Ardhisasa Dual Chatbot", layout="wide")
 
@@ -54,9 +55,13 @@ sop_db = Chroma(
     embedding_function=embeddings
 )
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
-sop_qa = RetrievalQA.from_chain_type(llm=llm, retriever=sop_db.as_retriever())
+try:
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
+    sop_qa = RetrievalQA.from_chain_type(llm=llm, retriever=sop_db.as_retriever())
+except RateLimitError:
+    st.error("⚠️ Your OpenAI quota has been exceeded. Please check your billing plan.")
+    st.stop()
 
 # -------------------------------
 # Step 3: Chat interface
@@ -67,12 +72,16 @@ if "history" not in st.session_state:
 query = st.text_input("Ask me anything about Ardhisasa...")
 
 if query:
-    if any(word in query.lower() for word in ["password", "login", "account", "transfer", "payment", "parcel"]):
-        answer = faq_qa.run(query)
-        source = "FAQ KB"
-    else:
-        answer = sop_qa.run(query)
-        source = "SOP KB"
+    try:
+        if any(word in query.lower() for word in ["password", "login", "account", "transfer", "payment", "parcel"]):
+            answer = faq_qa.run(query)
+            source = "FAQ KB"
+        else:
+            answer = sop_qa.run(query)
+            source = "SOP KB"
+    except RateLimitError:
+        answer = "⚠️ API quota exceeded. Please upgrade your OpenAI plan."
+        source = "System"
 
     st.session_state.history.append(("You", query))
     st.session_state.history.append((f"{source}", answer))
