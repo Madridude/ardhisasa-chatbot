@@ -4,12 +4,43 @@ import streamlit as st
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
+from langchain_community.llms import HuggingFaceHub, Ollama
 from openai.error import RateLimitError
 
 st.set_page_config(page_title="Ardhisasa Dual Chatbot", layout="wide")
 
 st.title("🤖 Ardhisasa Dual Chatbot")
-st.write("Handles both **citizen FAQs** and **internal SOP queries** automatically.")
+st.write("Handles both **citizen FAQs** and **internal SOP queries** automatically with hybrid LLM fallback.")
+
+# -------------------------------
+# Hybrid LLM Selection
+# -------------------------------
+def get_llm():
+    """Return best available LLM with fallbacks."""
+    try:
+        return ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    except RateLimitError:
+        st.warning("⚠️ OpenAI quota exceeded, switching to Hugging Face...")
+    except Exception as e:
+        st.info(f"⚠️ OpenAI not available: {e}")
+
+    try:
+        return HuggingFaceHub(
+            repo_id="google/flan-t5-base",
+            huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
+        )
+    except Exception as e:
+        st.info(f"⚠️ Hugging Face not available: {e}")
+
+    try:
+        return Ollama(model="llama2")
+    except Exception as e:
+        st.info(f"⚠️ Ollama not available: {e}")
+
+    class DummyLLM:
+        def predict(self, text):
+            return f"[Simulated Answer] You asked: {text}"
+    return DummyLLM()
 
 # -------------------------------
 # Step 1: Ensure vector DBs exist
@@ -44,24 +75,12 @@ ingest_if_missing()
 # -------------------------------
 # Step 2: Load databases
 # -------------------------------
-faq_db = Chroma(
-    persist_directory="chroma_faq",
-    collection_name="faq_kb",
-    embedding_function=embeddings
-)
-sop_db = Chroma(
-    persist_directory="chroma_sop",
-    collection_name="sop_kb",
-    embedding_function=embeddings
-)
+faq_db = Chroma(persist_directory="chroma_faq", collection_name="faq_kb", embedding_function=embeddings)
+sop_db = Chroma(persist_directory="chroma_sop", collection_name="sop_kb", embedding_function=embeddings)
 
-try:
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-    faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
-    sop_qa = RetrievalQA.from_chain_type(llm=llm, retriever=sop_db.as_retriever())
-except RateLimitError:
-    st.error("⚠️ Your OpenAI quota has been exceeded. Please check your billing plan.")
-    st.stop()
+llm = get_llm()
+faq_qa = RetrievalQA.from_chain_type(llm=llm, retriever=faq_db.as_retriever())
+sop_qa = RetrievalQA.from_chain_type(llm=llm, retriever=sop_db.as_retriever())
 
 # -------------------------------
 # Step 3: Chat interface
@@ -79,8 +98,8 @@ if query:
         else:
             answer = sop_qa.run(query)
             source = "SOP KB"
-    except RateLimitError:
-        answer = "⚠️ API quota exceeded. Please upgrade your OpenAI plan."
+    except Exception as e:
+        answer = f"⚠️ Chatbot error: {e}"
         source = "System"
 
     st.session_state.history.append(("You", query))
